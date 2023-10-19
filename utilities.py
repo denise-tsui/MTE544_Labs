@@ -1,4 +1,4 @@
-from math import atan2, asin, sqrt
+from math import atan2, asin, sqrt, sin, cos
 
 M_PI=3.1415926535
 
@@ -87,10 +87,12 @@ class FileReader:
 def euler_from_quaternion(quat):
     """
     Convert quaternion (w in last place) to euler roll, pitch, yaw.
-    quat = [x, y, z, w]
+    quat = [x, y, z, w]sin
     """
-
-    # just unpack yaw
+    # yaw = atan2(2 * (w*z + x*y), 1 - 2*(y*y + z*z))
+    t0 = +2.0 * (quat[0] * quat[1] + quat[2] * quat[3]) # 2 * (w*z + x*y)
+    t1 = +1.0 -2.0 * (quat[1] * quat[1] + quat[2] * quat[2]) # 1 - 2*(y*y + z*z)
+    yaw = atan2(t0, t1) 
     return yaw
 
 
@@ -100,7 +102,13 @@ def calculate_linear_error(current_pose, goal_pose):
     # Compute the linear error in x and y
     # Remember that current_pose = [x,y, theta, time stamp] and goal_pose = [x,y,theta]
     # Remember to use the Euclidean distance to calculate the error.
-    error_linear= ...
+    x_curr = current_pose[0] #current_pose.pose.position.x
+    y_curr = current_pose[1] #current_pose.pose.position.y
+
+    xg = goal_pose[0]
+    yg = goal_pose[1]
+
+    error_linear=sqrt((xg - x_curr) ** 2 + (yg - y_curr) ** 2)
 
     return error_linear
 
@@ -110,11 +118,15 @@ def calculate_angular_error(current_pose, goal_pose):
     # Compute the linear error in x and y
     # Remember that current_pose = [x,y, theta, time stamp] and goal_pose = [x,y,theta]
     # Remember that this function returns the difference in orientation between where the robot currently faces and where it should face to reach the goal
+    theta = euler_from_quaternion(current_pose[2]) #current_pose.pose.pose.orientation)
+    theta_g = goal_pose[2]
 
-    error_angular = ...
+    error_angular = atan2(sin(theta_g - theta), cos(theta_g - theta))
 
     # Remember to handle the cases where the angular error might exceed the range [-π, π]
-
-    ...
+    if error_angular > M_PI:
+        error_angular -= M_PI
+    elif error_angular < -M_PI:
+        error_angular += M_PI
     
     return error_angular
